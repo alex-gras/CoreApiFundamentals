@@ -24,13 +24,13 @@ namespace CoreCodeCamp.Controllers
             this.mapper = mapper;
         }
         [HttpGet]
-        public async Task<IActionResult>  GetCamps()
+        public async Task<ActionResult<CampModel[]>>  GetCamps()
         {
             try
             {
                 var results = await repository.GetAllCampsAsync();
-                CampModel[] models = mapper.Map<CampModel[]>(results);
-                return Ok(models);
+            
+                return mapper.Map<CampModel[]>(results);
             }
             catch (Exception)
             {
