@@ -50,6 +50,7 @@ namespace CoreCodeCamp.Controllers
             try
             {
                 var Talk = await repository.GetTalkByMonikerAsync(moniker, id, true);
+                if (Talk == null) return NotFound("No se ha encontrado!!.");
                 return mapper.Map<TalkModel>(Talk);
             }
             catch (Exception)
@@ -94,6 +95,65 @@ namespace CoreCodeCamp.Controllers
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Database Failure");
             }
 
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<TalkModel>> Put(string moniker, int id, TalkModel model)
+        {
+            try
+            {
+                var talk = await repository.GetTalkByMonikerAsync(moniker, id, true);
+                if (talk == null) return NotFound("Couldn't find the talk");
+
+                mapper.Map(model, talk);
+
+                if (model.Speakers != null)
+                {
+                    var speaker = await repository.GetSpeakerAsync(model.Speakers.SpeakerId);
+                    if (speaker != null)
+                    {
+                        talk.Speaker = speaker;
+                    }
+                }
+
+
+                if (await repository.SaveChangesAsync())
+                {
+                    return mapper.Map<TalkModel>(talk);
+                }
+                else
+                {
+                    return BadRequest("Failed to update database!");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Database Failure");
+             }
+
+        }
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(string moniker, int id)
+        {
+            try
+            {
+                var talk = await repository.GetTalkByMonikerAsync(moniker, id);
+                if (talk == null) return NotFound("Failed to find the talk to delete");
+                repository.Delete(talk);
+                if (await repository.SaveChangesAsync())
+                {
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest("Failed to delete talk");
+                }
+            }
+            catch (Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Database Failure");
+             }
         }
     }
 }
